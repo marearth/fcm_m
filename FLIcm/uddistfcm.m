@@ -1,0 +1,56 @@
+function [out1,out2] = uddistfcm(center, data,rc,U,expo)
+%DISTFCM Distance measure in fuzzy c-mean clustering.
+%	OUT = DISTFCM(CENTER, DATA) calculates the Euclidean distance
+%	between each row in CENTER and each row in DATA, and returns a
+%	distance matrix OUT of size M by N, where M and N are row
+%	dimensions of CENTER and DATA, respectively, and OUT(I, J) is
+%	the distance between CENTER(I,:) and DATA(J,:).
+%
+%       See also FCMDEMO, INITFCM, IRISFCM, STEPFCM, and FCM.
+
+%	Roger Jang, 11-22-94, 6-27-95.
+%       Copyright 1994-2002 The MathWorks, Inc. 
+out1 = zeros(size(center, 1), size(data, 1));
+out2 = zeros(size(center, 1), size(data, 1));
+% fill the output matrix
+    for k = 1:size(center, 1),
+	out1(k, :) = abs(center(k)-data)';
+    end
+    for k=1:size(center,1),
+        for i=1:size(data,1),
+            [neigh1,neigh2,ct]=neighbor(rc,i);
+            neigh1=neigh1-ones(size(neigh1,1),1)*ct;
+            d=(sqrt(sum((neigh1.^2)'))+1).^(-1);             
+            u=(1-U(k,neigh2)).^expo;
+            xv=(data(neigh2,1)-center(k)).^2;
+            out2(k,i)=(d.*u)*xv;
+        end
+    end           
+end
+
+function [out1,out2,out3]=neighbor(rc,i)
+  out=[];
+  r=rc(1);
+  c=rc(2);
+  %c1=floor(i/r)+1;
+  r1=mod(i,r);
+  if(r1==0),
+      r1=r;
+      c1=floor(i/r);
+  else
+      c1=floor(i/r)+1;        
+  end
+ temp=[-1 1;-1 0;1 -1;1 0;0 1;0 -1;1 1;-1 -1];
+ temp(:,1)=temp(:,1)+r1;
+ temp(:,2)=temp(:,2)+c1;
+ if(r1==1 || c1==1 || r1==r || c1==c),   %Deal with boundary
+ nr=find(temp(:,1)==0 | temp(:,1)==r+1);
+ nc=find(temp(:,2)==0 | temp(:,2)==c+1);
+ rc=union(nc,nr);
+ temp(rc,:)=[];
+ end
+ out1=temp;
+ temp(:,2)=temp(:,2)-1;
+ out2=temp*[1;r];
+ out3=[r1 c1];
+end
